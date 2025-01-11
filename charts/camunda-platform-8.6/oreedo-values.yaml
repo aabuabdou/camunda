@@ -1,0 +1,166 @@
+#camunda-platform-core-values.yaml
+global:
+  ingress:
+    enabled: true
+    className: public
+    host: "camunda.oreedo.co" 
+    tls:
+      enabled: true
+      secretName: "oreedo-20241219"   
+
+  identity:
+    auth:
+      publicIssuerUrl: "https://camunda.oreedo.co/auth/realms/camunda-platform"
+      operate:
+        redirectUrl: "https://camunda.oreedo.co/operate"
+      tasklist:
+        redirectUrl: "https://camunda.oreedo.co/tasklist"   
+      optimize:
+        redirectUrl: "https://camunda.oreedo.co/optimize"       
+      enabled: true
+
+operate:
+  # https://hub.docker.com/r/camunda/operate/tags
+  image:
+    repository: camunda/operate
+    tag: 8.6.7
+  contextPath: "/operate"
+  # resources:
+  #   requests:
+  #     cpu: 168m
+  #     memory: 3Gi      
+  #   limits:
+  #     cpu: 337m
+  #     memory: 5Gi            
+
+tasklist:
+  # https://hub.docker.com/r/camunda/tasklist/tags
+  image:
+    repository: camunda/tasklist
+    tag: 8.6.7
+  contextPath: "/tasklist"
+  # resources:
+  #   requests:
+  #     cpu: 168m
+  #     memory: 3Gi      
+  #   limits:
+  #     cpu: 337m
+  #     memory: 5Gi     
+
+# Disable identity as part of the Camunda core
+identity:
+  # https://hub.docker.com/r/camunda/identity/tags
+  image:
+    repository: camunda/identity
+    tag: 8.6.7
+  enabled: true
+  contextPath: "/identity"
+  fullURL: "https://camunda.oreedo.co/identity"  
+  # resources:
+  #   requests:
+  #     cpu: 2000m
+  #     memory: 3Gi   
+  #   limits:
+  #     cpu: 3000m
+  #     memory: 4Gi  
+
+# Disable keycloak
+identityKeycloak:
+  # https://hub.docker.com/r/bitnami/keycloak/tags
+  image:
+    repository: bitnami/keycloak
+    tag: 25.0.6
+  postgresql:
+    # https://hub.docker.com/r/bitnami/postgresql/tags
+    image:
+      repository: bitnami/postgresql
+      tag: 15.10.0-debian-12-r2
+  enabled: true
+  # resources:
+  #   requests:
+  #     cpu: 225m
+  #   limits:
+  #     cpu: 450m
+
+optimize:
+  # https://hub.docker.com/r/camunda/optimize/tags
+  image:
+    repository: camunda/optimize
+    tag: 8.6.4
+  enabled: true
+  contextPath: "/optimize"  
+  # resources:
+  #   requests:
+  #     cpu: 500m    # 0.5 core
+  #   limits:
+  #     cpu: 750m    # 0.75 cores   
+
+# Reduce for Zeebe and Gateway the configured replicas and with that the required resources
+# to get it running locally
+zeebe:
+  # https://hub.docker.com/r/camunda/zeebe/tags
+  image:
+    repository: camunda/zeebe
+    tag: 8.6.7
+  clusterSize: 1
+  partitionCount: 1
+  replicationFactor: 1
+  pvcSize: 10Gi
+    #resources:
+    #requests:
+      #cpu: 225m
+      #memory: 2Gi
+    #limits:
+      #cpu: 2000m
+      #memory: 4Gi
+
+zeebeGateway:
+  # https://hub.docker.com/r/camunda/zeebe/tags
+  image:
+    repository: camunda/zeebe
+    tag: 8.6.7
+  replicas: 1
+  ingress:
+    enabled: true
+    className: public
+    host: "zeebe.oreedo.co"
+    tls:
+      enabled: true
+      secretName: "oreedo-20241219"
+  # resources:
+  #   requests:
+  #     cpu: 168m
+  #   limits:
+  #     cpu: 337m           
+
+connectors:
+  # https://hub.docker.com/r/camunda/connectors-bundle/tags
+  image:
+    repository: camunda/connectors-bundle
+    tag: 8.6.6
+  enabled: true
+  inbound:
+    mode: disabled
+  # resources:
+  #   requests:
+  #     cpu: 112m
+  #   limits:
+  #     cpu: 225m   
+
+elasticsearch:
+  # https://hub.docker.com/r/bitnami/elasticsearch/tags
+  image:
+    repository: bitnami/elasticsearch
+    tag: 8.15.4
+  master:
+    replicaCount: 1
+    # Request smaller persistent volumes.
+    persistence:
+      size: 15Gi
+    # resources:
+    #   requests:
+    #     cpu: 337m
+    #     memory: 4Gi
+    #   limits:
+    #     cpu: 675m  
+    #     memory: 8Gi        
