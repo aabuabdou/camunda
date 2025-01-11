@@ -77,6 +77,14 @@ identityKeycloak:
     image:
       repository: bitnami/postgresql
       tag: 15.10.0-debian-12-r2
+    auth:
+      ## @param identityKeycloak.postgresql.auth.existingSecret defines the existing secret resource containing the database credentials
+      existingSecret:
+      secretKeys:
+        ## @param identityKeycloak.postgresql.auth.secretKeys.adminPasswordKey defines the key within the existing secret object for PostgreSQL admin.
+        adminPasswordKey: "S069Ve8aALv263F1l"
+        ## @param identityKeycloak.postgresql.auth.secretKeys.userPasswordKey defines the key within the existing secret object for PostgreSQL user.
+        userPasswordKey: "SWDo2QXP3w71684LL"      
 
 #
 # Elasticsearch
