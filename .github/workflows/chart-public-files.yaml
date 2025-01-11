@@ -1,0 +1,59 @@
+# Copy files to the gh-pages branch to have clean and shorter links.
+# Example: https://helm.camunda.io/camunda-platform/values/values-latest.yaml
+name: "Chart - Public Files"
+
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - '.github/workflows/chart-public-files.yaml'
+    - 'charts/camunda-platform*/values*.yaml'
+    - 'scripts/templates/version-matrix/*'
+    - 'version-matrix/**'
+  workflow_dispatch: { }
+
+permissions:
+  contents: read
+
+jobs:
+  copy-files:
+    name: Copy chart public files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          ref: gh-pages
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          path: main
+      - name: Copy files
+        run: |
+          #
+          # Values files.
+          mkdir -p camunda-platform/values
+
+          # Latest version.
+          version_latest_dir="$(ls -d1 main/charts/camunda-platform-8* | tail -n1)"
+          cp -a ${version_latest_dir}/values-latest.yaml camunda-platform/values/values-latest.yaml
+
+          # Previous versions.
+          find main/charts -name "camunda-platform-8*" | while read chart_id; do
+              camunda_version="$(echo ${chart_id} | cut -d '-' -f 3)";
+              cp -a ${chart_id}/values-latest.yaml camunda-platform/values/values-v${camunda_version}.yaml;
+          done
+
+          #
+          # Version matrix.
+          mkdir -p camunda-platform/version-matrix
+          cp -a main/version-matrix/* camunda-platform/version-matrix/
+
+          #
+          # Post run.            
+          rm -rf main
+          find .
+      - uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9.1.4
+        with:
+          message: "chore: update camunda-platform public files"

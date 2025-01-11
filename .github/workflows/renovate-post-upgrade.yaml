@@ -1,0 +1,76 @@
+# Mimic postUpgradeTasks which is only available for self-hosted Renovate instances.
+# https://docs.renovatebot.com/configuration-options/#postupgradetasks
+name: Renovate - Post Upgrade Tasks
+
+on:
+  push:
+    branches:
+      - 'renovate/*'
+    paths:
+      - 'charts/camunda-platform*/Chart.yaml'
+      - 'charts/camunda-platform*/values.yaml'
+      - 'charts/camunda-platform*/templates/**'
+      - 'charts/camunda-platform*/charts/**'
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: Update golden files
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      #
+      # Checkout.
+      #
+      - name: Generate GitHub token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2
+        id: generate-github-token
+        with:
+          app_id: ${{ secrets.GH_APP_ID_DISTRO_CI }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY_DISTRO_CI }}
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          token: '${{ steps.generate-github-token.outputs.token }}'
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      #
+      # Dependencies.
+      #
+      - name: Install readme-generator-for-helm
+        run: npm install -g @bitnami/readme-generator-for-helm
+      - name: Install dependencies
+        uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
+      - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/.asdf/installs/golang/*/packages/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      #
+      # Post Upgrade Tasks.
+      #
+      - name: Set vars
+        run: |
+          echo "CHANGED_CHARTS=$(ct list-changed | tr '\n' ' ')" | tee -a $GITHUB_ENV
+      - name: Update golden files
+        run: |
+          chartPath="${CHANGED_CHARTS}" \
+            make go.update-golden-only
+      - name: Update README
+        run: |
+          chartPath="${CHANGED_CHARTS}" \
+            make helm.readme-update
+      - name: Git pull
+        run: git pull --rebase --autostash .
+      - uses: EndBug/add-and-commit@a94899bca583c204427a224a7af87c02f9b325d5 # v9.1.4
+        with:
+          author_name: "renovate[bot]"
+          author_email: "29139614+renovate[bot]@users.noreply.github.com"
+          message: "chore(deps): post upgrade tasks - update golden files"

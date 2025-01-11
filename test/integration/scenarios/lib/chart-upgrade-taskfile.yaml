@@ -1,0 +1,27 @@
+version: '3'
+
+vars:
+  TEST_NAMESPACE: '{{ env "TEST_NAMESPACE" | default "camunda-platform" }}'
+  TEST_CLUSTER_TYPE: '{{ env "TEST_CLUSTER_TYPE" | default "kubernetes" }}'
+  TEST_HELM_EXTRA_ARGS: '{{ env "TEST_HELM_EXTRA_ARGS" }} {{ .TEST_OPENSHIFT_ARGS }}'
+
+tasks:
+  pre:
+    cmds:
+    - |
+      test -f {{ .TEST_VALUES_BASE_DIR }}/pre-upgrade/* || {
+        echo "No pre setup task for this test."
+        exit 0
+      }
+      export TEST_NAMESPACE={{ .TEST_NAMESPACE }}
+      bash -x {{ .TEST_VALUES_BASE_DIR }}/pre-upgrade/*.sh
+
+  # https://docs.camunda.io/docs/self-managed/setup/upgrade/
+  exec:
+    cmds:
+    - |
+      helm upgrade integration {{ .TEST_CHART_NAME }} \
+        --namespace {{ .TEST_NAMESPACE }} \
+        --values {{ .TEST_VALUES_BASE_DIR }}/common/values-integration-test.yaml \
+        --timeout 20m0s \
+        --wait {{ .TEST_HELM_EXTRA_ARGS }}
