@@ -80,9 +80,9 @@ identityKeycloak:
       existingSecret:
       secretKeys:
         ## @param identityKeycloak.postgresql.auth.secretKeys.adminPasswordKey defines the key within the existing secret object for PostgreSQL admin.
-        adminPasswordKey: "S069Ve8aALv263F1l"
+        adminPasswordKey: "postgres-password"
         ## @param identityKeycloak.postgresql.auth.secretKeys.userPasswordKey defines the key within the existing secret object for PostgreSQL user.
-        userPasswordKey: "SWDo2QXP3w71684LL"      
+        userPasswordKey: "password"      
   enabled: true
   # resources:
   #   requests:
